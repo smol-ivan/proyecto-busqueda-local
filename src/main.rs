@@ -1,99 +1,35 @@
+mod busqueda_local;
+mod utils;
+
+use crate::busqueda_local::*;
+use crate::utils::*;
+
 use std::env;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-
-struct Caso {
-    id: u8,
-    filas: u8,
-    columnas: u8,
-    tablero: Vec<Vec<char>>,
-}
-
-impl Caso {
-    fn display(&self) {
-        for fila in &self.tablero {
-            println!("{:?}", fila);
-        }
-        println!();
-    }
-}
-
-fn display_casos(casos: &Vec<Caso>) {
-    for caso in casos {
-        println!("Caso {} ({}x{}): ", caso.id, caso.filas, caso.columnas);
-        caso.display();
-    }
-}
-
-fn leer_casos(path: &String) -> Vec<Caso> {
-    let file = File::open(path).expect("No se pudo abrir el archivo de casos.");
-    let reader = BufReader::new(file);
-
-    let mut casos = Vec::new();
-    let mut id = 1;
-    let mut lineas = reader.lines().filter_map(Result::ok).peekable();
-
-    while let Some(linea) = lineas.next() {
-        let linea = linea.trim();
-
-        // Ignorar comentarios y lineas vacias
-        if linea.is_empty() || linea.starts_with("# Caso") {
-            continue;
-        }
-
-        // Linea con dimensiones
-        let dimensiones: Vec<u8> = linea
-            .split_whitespace()
-            .filter_map(|x| x.parse().ok())
-            .collect();
-
-        if dimensiones.len() != 2 {
-            panic!(
-                "Hubo un error leyendo las dimensiones del problema. {:?}",
-                dimensiones
-            );
-        }
-
-        let (filas, columnas) = (dimensiones[0], dimensiones[1]);
-
-        let mut tablero = Vec::new();
-        for _ in 0..filas {
-            if let Some(linea_tablero) = lineas.next() {
-                let fila = linea_tablero
-                    .trim()
-                    .chars()
-                    .map(|c| if c == '#' { '*' } else { 'o' })
-                    .collect::<Vec<char>>();
-                if fila.len() != columnas as usize {
-                    panic!("La fila del tablero no tiene la cantidad esperada de columnas");
-                }
-                tablero.push(fila);
-            } else {
-                panic!("Salida temprana");
-            }
-        }
-
-        casos.push(Caso {
-            id,
-            filas,
-            columnas,
-            tablero,
-        });
-
-        id += 1;
-    }
-
-    casos
-}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        eprintln!("Uso: ${} <file_path_to_cases>", args[0]);
+    if args.len() < 4 {
+        eprintln!(
+            "Uso: ${} <file_path_to_cases> <print> <#_case> <iteraciones>",
+            args[0]
+        );
         return;
     }
-    println!("\x1b[1;31mHello, im red\x1b[0m");
-    println!("Hello, im not");
+    let print: bool = args[2].parse().expect("bool true~false");
+    let num_case: i8 = args[3]
+        .parse()
+        .expect("Expected a number of case. Up to 20");
+    let iteraciones: i32 = args[4].parse().expect("Expected a number");
+
     let casos = leer_casos(&args[1]);
-    display_casos(&casos);
+    display_casos(&casos, print, num_case - 1);
+
+    match num_case {
+        -1 => {
+            for i in 0..casos.len() {
+                cubrir(casos[i].clone(), iteraciones as usize);
+            }
+        }
+        _ => cubrir(casos[(num_case - 1) as usize].clone(), iteraciones as usize),
+    }
 }
