@@ -75,6 +75,7 @@ impl Pieza {
     }
 }
 
+#[derive(Debug)]
 struct Tablero {
     matriz: Matriz,
     filas: i32,
@@ -84,9 +85,9 @@ struct Tablero {
 impl Tablero {
     fn casillas_vacias(&self) -> i32 {
         let mut contador = 0;
-        for x in 0..self.columnas {
-            for y in 0..self.filas {
-                if self.matriz[x as usize][y as usize] == 0 {
+        for y in 0..self.filas {
+            for x in 0..self.columnas {
+                if self.matriz[y as usize][x as usize] == 0 {
                     contador += 1;
                 }
             }
@@ -95,12 +96,12 @@ impl Tablero {
     }
     fn es_valido(&self, pieza: &Pieza) -> bool {
         for (x, y) in pieza.bloques_ocupados() {
-            // Verificar si esta dentro del tablero y las casillas libres es un multiplo de 4
-            if x < 0 || y < 0 || x > self.columnas || y > self.filas || self.casillas_vacias() > 4 {
+            // Verificar si esta dentro del tablero
+            if x < 0 || y < 0 || x >= self.columnas || y >= self.filas {
                 return false;
             }
 
-            if self.matriz[x as usize][y as usize] == 1 {
+            if self.matriz[y as usize][x as usize] == 1 {
                 return false;
             }
         }
@@ -109,7 +110,7 @@ impl Tablero {
 
     fn colocar_pieza(&mut self, pieza: &Pieza, piezas: &mut Vec<Pieza>) {
         for (x, y) in pieza.bloques_ocupados() {
-            self.matriz[x as usize][y as usize] = 1;
+            self.matriz[y as usize][x as usize] = 1;
         }
         piezas.push(pieza.clone())
     }
@@ -118,6 +119,15 @@ impl Tablero {
 struct Solucion {
     matriz: Tablero,
     piezas: Vec<Pieza>,
+}
+
+impl Solucion {
+    fn display(&self) {
+        for fila in &self.matriz.matriz {
+            println!("{:?}", fila);
+        }
+        println!("Piezas: {:?}", self.piezas);
+    }
 }
 
 fn solucion_inicial_aleatoria(matriz: Matriz, filas: i32, columnas: i32) -> Solucion {
@@ -165,5 +175,5 @@ fn solucion_inicial_aleatoria(matriz: Matriz, filas: i32, columnas: i32) -> Solu
 pub fn cubrir(caso: Caso, iteraciones: usize) {
     // Solucion inicial aleatoria
     let solucion = solucion_inicial_aleatoria(caso.tablero, caso.filas, caso.columnas);
-    println!("{:?}", solucion.piezas);
+    solucion.display();
 }
