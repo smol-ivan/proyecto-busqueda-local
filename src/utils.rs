@@ -72,7 +72,7 @@ pub fn leer_casos(path: &String) -> Vec<Caso> {
                 let fila = linea_tablero
                     .trim()
                     .chars()
-                    .map(|c| if c == '#' { 1 } else { 0 })
+                    .map(|c| if c == '#' { -1 } else { 0 })
                     .collect::<Vec<i8>>();
                 if fila.len() != columnas as usize {
                     panic!("La fila del tablero no tiene la cantidad esperada de columnas");
