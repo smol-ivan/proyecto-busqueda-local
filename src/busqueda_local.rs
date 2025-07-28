@@ -186,7 +186,7 @@ impl Solucion {
 
         for i in 0..self.piezas.len() {
             let (pieza_copy, solucion_copy) = self.eliminar_pieza(i);
-            
+
             // Reposicionar la pieza: probar todas las posiciones y rotaciones posibles
             // excepto la posición y rotación original
             let mut temp_pieza = pieza_copy.clone();
@@ -196,20 +196,19 @@ impl Solucion {
             if solucion_copy.matriz.casillas_vacias() == 0 {
                 continue;
             }
-            
+
             // Revisar todas las posiciones libres
             for (x, y) in solucion_copy.casilleros_libres() {
                 temp_pieza.mover(x, y);
-                
+
                 // Revisar todas las rotaciones en cada posición
                 for rotacion_num in 0..4 {
-                    // Evitar generar la misma pieza (misma posición y rotación que la original)
+                    // Evitar generar la misma pieza
                     if x == pieza_copy.x && y == pieza_copy.y && rotacion_num == 0 {
-                        // rotacion_num == 0 significa que tiene la misma rotación que pieza_copy
                         temp_pieza.rotar();
                         continue;
                     }
-                    
+
                     if solucion_copy.matriz.es_valido(&temp_pieza) {
                         let mut solucion_temp = solucion_copy.clone();
                         solucion_temp.agregar_pieza(temp_pieza.clone());
