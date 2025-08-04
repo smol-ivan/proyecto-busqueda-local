@@ -126,7 +126,7 @@ impl Tablero {
 }
 
 #[derive(Clone)]
-struct Solucion {
+pub struct Solucion {
     matriz: Tablero,
     piezas: Vec<Pieza>,
 }
@@ -162,20 +162,25 @@ impl Solucion {
         }
         vec
     }
+}
 
-    fn generar_vecinos(&mut self) -> Vec<Solucion> {
-        // Crear un vecindario con dos tipos de modificaciones:
-        // 1. Agregar una nueva pieza (sin quitar ninguna existente)
-        // 2. Reposicionar una pieza existente (todas las posiciones y rotaciones posibles)
+pub trait GeneracionVecinos {
+    fn generar_vecinos(&self, solucion: &mut Solucion) -> Vec<Solucion>;
+}
+
+pub struct Sencillo;
+
+impl GeneracionVecinos for Sencillo {
+    fn generar_vecinos(&self, solucion: &mut Solucion) -> Vec<Solucion> {
         let mut vecindario = Vec::new();
-        // MODIFICACIÓN 1: Agregar nueva pieza sin quitar ninguna existente
-        if self.matriz.casillas_vacias() != 0 {
-            let mut nueva_pieza = Pieza::new(self.piezas.len() as i8 + 1, 0, 0, Rotacion::Deg0);
-            for (x, y) in self.casilleros_libres() {
+        // MODIFICACIÓN 1: Si hay espacio, agregar una nueva pieza
+        if solucion.matriz.casillas_vacias() != 0 {
+            let mut nueva_pieza = Pieza::new(solucion.piezas.len() as i8 + 1, 0, 0, Rotacion::Deg0);
+            for (x, y) in solucion.casilleros_libres() {
                 nueva_pieza.mover(x, y);
                 for _ in 0..4 {
-                    if self.matriz.es_valido(&nueva_pieza) {
-                        let mut solucion_temp = self.clone();
+                    if solucion.matriz.es_valido(&nueva_pieza) {
+                        let mut solucion_temp = solucion.clone();
                         solucion_temp.agregar_pieza(nueva_pieza.clone());
                         vecindario.push(solucion_temp);
                     }
@@ -184,37 +189,98 @@ impl Solucion {
             }
         }
 
-        for i in 0..self.piezas.len() {
-            let (pieza_copy, solucion_copy) = self.eliminar_pieza(i);
-
-            // Reposicionar la pieza: probar todas las posiciones y rotaciones posibles
-            // excepto la posición y rotación original
-            let mut temp_pieza = pieza_copy.clone();
-            temp_pieza.id = solucion_copy.piezas.len() as i8 + 1;
+        for i in 0..solucion.piezas.len() {
+            let (pieza_copy, solucion_copy) = solucion.eliminar_pieza(i);
 
             // Si no hay espacio, continuar con la siguiente pieza
             if solucion_copy.matriz.casillas_vacias() == 0 {
                 continue;
             }
 
-            // Revisar todas las posiciones libres
+            // MODIFICACION 2: Rotar pieza actual
+            let mut temp_pieza = pieza_copy.clone();
+            temp_pieza.id = solucion_copy.piezas.len() as i8 + 1;
+
+            for _ in 0..4 {
+                temp_pieza.rotar();
+                if solucion_copy.matriz.es_valido(&temp_pieza) {
+                    let mut solucion_temp = solucion_copy.clone();
+                    solucion_temp.agregar_pieza(temp_pieza.clone());
+                    vecindario.push(solucion_temp);
+                }
+                temp_pieza.rotar();
+            }
+
+            // MODIFICACION 3: Mover una pieza
+
+            temp_pieza = pieza_copy.clone();
+
             for (x, y) in solucion_copy.casilleros_libres() {
                 temp_pieza.mover(x, y);
+                if solucion_copy.matriz.es_valido(&temp_pieza) {
+                    let mut solucion_temp = solucion_copy.clone();
+                    solucion_temp.agregar_pieza(temp_pieza.clone());
+                    vecindario.push(solucion_temp);
+                }
+            }
+        }
+        vecindario
+    }
+}
 
-                // Revisar todas las rotaciones en cada posición
-                for rotacion_num in 0..4 {
-                    // Evitar generar la misma pieza
-                    if x == pieza_copy.x && y == pieza_copy.y && rotacion_num == 0 {
-                        temp_pieza.rotar();
-                        continue;
-                    }
+pub struct Mejora;
 
-                    if solucion_copy.matriz.es_valido(&temp_pieza) {
-                        let mut solucion_temp = solucion_copy.clone();
-                        solucion_temp.agregar_pieza(temp_pieza.clone());
+impl GeneracionVecinos for Mejora {
+    fn generar_vecinos(&self, solucion: &mut Solucion) -> Vec<Solucion> {
+        let mut vecindario = Vec::new();
+        // MODIFICACIÓN 1: Si hay espacio, agregar una nueva pieza
+        if solucion.matriz.casillas_vacias() != 0 {
+            let mut nueva_pieza = Pieza::new(solucion.piezas.len() as i8 + 1, 0, 0, Rotacion::Deg0);
+            for (x, y) in solucion.casilleros_libres() {
+                nueva_pieza.mover(x, y);
+                for _ in 0..4 {
+                    if solucion.matriz.es_valido(&nueva_pieza) {
+                        let mut solucion_temp = solucion.clone();
+                        solucion_temp.agregar_pieza(nueva_pieza.clone());
                         vecindario.push(solucion_temp);
                     }
-                    temp_pieza.rotar();
+                    nueva_pieza.rotar();
+                }
+            }
+        }
+
+        for i in 0..solucion.piezas.len() {
+            let (pieza_copy, solucion_copy) = solucion.eliminar_pieza(i);
+
+            // Si no hay espacio, continuar con la siguiente pieza
+            if solucion_copy.matriz.casillas_vacias() == 0 {
+                continue;
+            }
+
+            // MODIFICACION 2: Rotar pieza actual
+            let mut temp_pieza = pieza_copy.clone();
+            temp_pieza.id = solucion_copy.piezas.len() as i8 + 1;
+
+            for _ in 0..4 {
+                temp_pieza.rotar();
+                if solucion_copy.matriz.es_valido(&temp_pieza) {
+                    let mut solucion_temp = solucion_copy.clone();
+                    solucion_temp.agregar_pieza(temp_pieza.clone());
+                    vecindario.push(solucion_temp);
+                }
+                temp_pieza.rotar();
+            }
+
+            // MODIFICACION 3: Mover una pieza
+
+            temp_pieza = pieza_copy.clone();
+
+            for (x, y) in solucion_copy.casilleros_libres() {
+                temp_pieza.mover(x, y);
+                if solucion_copy.matriz.es_valido(&temp_pieza) {
+                    let mut solucion_temp = solucion_copy.clone();
+                    solucion_temp.agregar_pieza(temp_pieza.clone());
+                    vecindario.push(solucion_temp);
                 }
             }
         }
@@ -275,7 +341,11 @@ fn celdas_cubiertas(solucion: &Solucion) -> i32 {
     contador
 }
 
-pub fn cubrir(caso: Caso, iteraciones: usize) {
+pub fn cubrir(
+    caso: Caso,
+    iteraciones: usize,
+    generacion_vecinos: &dyn GeneracionVecinos,
+) -> Solucion {
     // Solucion inicial aleatoria
     let mut solucion = solucion_inicial_aleatoria(caso.tablero, caso.filas, caso.columnas);
     let mut solucion_mejor = solucion.clone(); // línea 2 del pseudocódigo
@@ -283,18 +353,10 @@ pub fn cubrir(caso: Caso, iteraciones: usize) {
     solucion.display();
 
     for _i in 1..=iteraciones {
-        println!("\n=== ITERACIÓN {} ===", _i);
-        println!("Posición actual: {} celdas", celdas_cubiertas(&solucion));
-        println!(
-            "Récord histórico: {} celdas",
-            celdas_cubiertas(&solucion_mejor)
-        );
-
         let mut mejor_vecino = solucion.clone();
 
         // Generar vecinos de S
-        let vecinos = solucion.generar_vecinos();
-        println!("Generados {} vecinos", vecinos.len());
+        let vecinos = generacion_vecinos.generar_vecinos(&mut solucion);
 
         // Encontrar el mejor vecino
         for vecino in vecinos {
@@ -303,59 +365,18 @@ pub fn cubrir(caso: Caso, iteraciones: usize) {
             }
         }
 
-        println!(
-            "Mejor vecino encontrado: {} celdas",
-            celdas_cubiertas(&mejor_vecino)
-        );
-
         // Hay algun lugar visible que sea mas alto que donde estoy?
         // Vale la pena moverme?
         if celdas_cubiertas(&mejor_vecino) > celdas_cubiertas(&solucion) {
-            println!(
-                "✅ PRIMER IF: El vecino ({}) es mejor que la posición actual ({})",
-                celdas_cubiertas(&mejor_vecino),
-                celdas_cubiertas(&solucion)
-            );
-
             solucion = mejor_vecino;
-            println!(
-                "   → Nos movemos a la nueva posición: {} celdas",
-                celdas_cubiertas(&solucion)
-            );
 
             // Esta nueva posicion es mas alta que mi record personal?
             if celdas_cubiertas(&solucion) > celdas_cubiertas(&solucion_mejor) {
-                println!(
-                    "   ✅ SEGUNDO IF: La nueva posición ({}) es mejor que nuestro récord ({})",
-                    celdas_cubiertas(&solucion),
-                    celdas_cubiertas(&solucion_mejor)
-                );
                 solucion_mejor = solucion.clone();
-                println!(
-                    "      → ¡NUEVO RÉCORD! Actualizamos la mejor solución: {} celdas",
-                    celdas_cubiertas(&solucion_mejor)
-                );
-            } else {
-                println!(
-                    "   ❌ SEGUNDO IF: La nueva posición ({}) NO supera nuestro récord ({})",
-                    celdas_cubiertas(&solucion),
-                    celdas_cubiertas(&solucion_mejor)
-                );
-                println!("      → Nos movemos pero mantenemos el récord anterior");
             }
         } else {
-            println!(
-                "❌ PRIMER IF: El mejor vecino ({}) NO es mejor que la posición actual ({})",
-                celdas_cubiertas(&mejor_vecino),
-                celdas_cubiertas(&solucion)
-            );
-            println!("   → MÁXIMO LOCAL ALCANZADO - terminamos la búsqueda");
             break;
         }
     }
-
-    // línea 20: regresar S_mejor
-    println!("Mejor solución encontrada:");
-    solucion_mejor.display();
-    println!("Celdas cubiertas: {}", celdas_cubiertas(&solucion_mejor));
+    solucion_mejor
 }
