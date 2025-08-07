@@ -1,5 +1,8 @@
 # Instrucciones de uso
 Este repositorio almacena el codigo realizado para el proyecto de busqueda local de la UEA analisis y diseño de algoritmos para la UAM-Cuajimalpa
+- Dentro de la carpeta `src/` se encuentra el algoritmo escrito en rust
+- Python fue usando para la representacion grafica, no para el algoritmo
+- El script en shell automatiza la ejecucion de el caso/ los casos de prueba
 ## Requisitos 
 - Python 3.x
 - pip
