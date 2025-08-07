@@ -4,6 +4,7 @@ mod utils;
 use crate::busqueda_local::*;
 use crate::utils::*;
 
+use core::panic;
 use std::env;
 
 fn main() {
@@ -16,7 +17,7 @@ fn main() {
         return;
     }
     let print: bool = args[2].parse().expect("bool true~false");
-    let num_case: i8 = args[3]
+    let num_case: usize = args[3]
         .parse()
         .expect("Expected a number of case. Up to 20");
     let iteraciones: i32 = args[4].parse().expect("Expected a number");
@@ -30,24 +31,20 @@ fn main() {
     };
 
     let casos = leer_casos(&args[1]);
-    display_casos(&casos, print, num_case - 1);
+    if num_case < 1 || num_case > casos.len() {
+        panic!(
+            "Número de caso fuera de rango. Debe ser entre 1 y {}.",
+            casos.len(),
+        );
+    }
+    println!("Caso: {}", num_case);
+    let caso = &casos[num_case - 1];
 
-    match num_case {
-        -1 => {
-            for i in 0..casos.len() {
-                let _ = cubrir(
-                    casos[i].clone(),
-                    iteraciones as usize,
-                    generar_vecinos.as_ref(),
-                );
-            }
-        }
-        _ => {
-            let _ = cubrir(
-                casos[(num_case - 1) as usize].clone(),
-                iteraciones as usize,
-                generar_vecinos.as_ref(),
-            );
-        }
+    if caso.se_puede_resolver() {
+        imprimir_tablero(&caso.tablero, 1);
+        let solucion = cubrir(caso.clone(), iteraciones as usize, generar_vecinos.as_ref());
+        imprimir_tablero(&solucion.matriz.matriz, 3);
+    } else {
+        imprimir_tablero(&caso.tablero, 4);
     }
 }

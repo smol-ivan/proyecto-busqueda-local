@@ -5,33 +5,22 @@ use std::io::{BufRead, BufReader};
 
 #[derive(Clone)]
 pub struct Caso {
-    pub id: i32,
     pub filas: i32,
     pub columnas: i32,
     pub tablero: Matriz,
 }
 
 impl Caso {
-    pub fn display(&self) {
-        for fila in &self.tablero {
-            println!("{:?}", fila);
-        }
-        println!();
-    }
-}
-
-pub fn display_casos(casos: &Vec<Caso>, print: bool, num_case: i8) {
-    if print {
-        if num_case != -1 {
-            let caso = &casos[num_case as usize];
-            println!("Caso {} ({}x{}): ", caso.id, caso.filas, caso.columnas);
-            caso.display();
-        } else {
-            for caso in casos {
-                println!("Caso {} ({}x{}): ", caso.id, caso.filas, caso.columnas);
-                caso.display();
+    pub fn se_puede_resolver(&self) -> bool {
+        let mut contador = 0;
+        for y in 0..self.filas {
+            for x in 0..self.columnas {
+                if self.tablero[y as usize][x as usize] == 0 {
+                    contador += 1;
+                }
             }
         }
+        contador % 4 == 0
     }
 }
 
@@ -84,7 +73,6 @@ pub fn leer_casos(path: &String) -> Vec<Caso> {
         }
 
         casos.push(Caso {
-            id,
             filas,
             columnas,
             tablero,
@@ -94,4 +82,26 @@ pub fn leer_casos(path: &String) -> Vec<Caso> {
     }
 
     casos
+}
+
+pub fn imprimir_tablero(tablero: &Matriz, tipo: u8) {
+    let filas = tablero.len();
+    let columnas = tablero[0].len();
+    let etiqueta = match tipo {
+        1 => "TABLERO_INICIAL",
+        2 => "SOLUCION_INICIAL",
+        3 => "SOLUCION_FINAL",
+        4 => "NO_SOLUCION",
+        _ => panic!("Tipo de tablero inválido: debe ser 1, 2 , 3 o 4"),
+    };
+
+    println!("{}_INICIO", etiqueta);
+    println!("{}:{}", filas, columnas);
+    for fila in tablero {
+        for &celda in fila {
+            print!("{} ", celda);
+        }
+        println!();
+    }
+    println!("{}_FIN", etiqueta);
 }
