@@ -1,5 +1,5 @@
 # Instrucciones de uso
-Este repositorio contiene un conjunto de scripts y herramientas para la gestión de datos y la automatización de tareas. A continuación, se detallan las instrucciones para su uso.
+Este repositorio almacena el codigo realizado para el proyecto de busqueda local de la UEA analisis y diseño de algoritmos para la UAM-Cuajimalpa
 ## Requisitos 
 - Python 3.x
 - pip
