@@ -1,8 +1,13 @@
 mod busqueda_local;
+mod pieza;
+mod solucion;
+mod tablero;
 mod utils;
+mod vecindario;
 
 use crate::busqueda_local::*;
 use crate::utils::*;
+use crate::vecindario::{GeneracionVecinos, Mejora, Sencillo};
 
 use core::panic;
 use std::env;
