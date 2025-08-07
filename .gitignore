@@ -2,3 +2,4 @@
 .venv/
 imagenes/
 resultados/
+.DS_Store
